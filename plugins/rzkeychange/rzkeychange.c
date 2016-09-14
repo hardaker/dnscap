@@ -34,7 +34,10 @@ static my_bpftimeval clos_ts = {0,0};
 static const char *report_zone = 0;
 static const char *report_server = 0;
 static const char *report_node = 0;
+static unsigned notLive = 0;
+static char noReporting = 0;
 static ldns_resolver *res;
+static time_t  last_sec = 0;
 
 output_t rzkeychange_output;
 
@@ -100,6 +103,8 @@ rzkeychange_usage()
 	"\t-z <zone>    Report counters to DNS zone <zone> (required)\n"
 	"\t-s <server>  Data is from server <server> (required)\n"
 	"\t-n <node>    Data is from site/node <node> (required)\n"
+	"\t-l           Report as if not-live (times pulled from the pcap file)\n"
+	"\t-r           Don't report anything via DNS queries\n"
     );
 }
 
@@ -107,7 +112,10 @@ void
 rzkeychange_getopt(int *argc, char **argv[])
 {
     int c;
-    while ((c = getopt(*argc, *argv, "n:s:z:")) != EOF) {
+    unsigned long ul;
+    char *p;
+
+    while ((c = getopt(*argc, *argv, "n:s:z:rl:")) != EOF) {
 	switch (c) {
 	case 'n':
 	    report_node = strdup(optarg);
@@ -117,6 +125,16 @@ rzkeychange_getopt(int *argc, char **argv[])
 	    break;
 	case 'z':
 	    report_zone = strdup(optarg);
+	    break;
+	case 'l':
+	    notLive = strtoul(optarg, NULL, 0);
+	    if (notLive <= 0) {
+		    fprintf(stderr, "-l requires an integer value of seconds\n");
+		    exit(1);
+	    }
+	    break;
+	case 'r':
+	    noReporting = 1;
 	    break;
 	default:
 	    rzkeychange_usage();
@@ -223,7 +241,12 @@ rzkeychange_submit_counts(void)
 	report_node,
 	report_server,
 	report_zone);
-    dns_query(qname, LDNS_RR_TYPE_TXT);
+
+    if (noReporting) {
+	    fprintf(stderr, "%s\n", qname);
+    } else {
+	    dns_query(qname, LDNS_RR_TYPE_TXT);
+    }
     /* normally we would free any return packet, but this process is about to exit */
 }
 
@@ -283,6 +306,7 @@ rzkeychange_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int i
     ldns_pkt *pkt = 0;
     ldns_rr_list *question_rr_list = 0;
     ldns_rr *question_rr = 0;
+
     if (IPPROTO_ICMP == proto) {
 	struct icmphdr *icmp = (void *) pkt_copy;
 	if (ICMP_DEST_UNREACH == icmp->type) {
@@ -321,4 +345,11 @@ rzkeychange_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int i
 	    counts.dnskey++;
 done:
     ldns_pkt_free(pkt);
+
+    if (notLive && last_sec + notLive < ts.tv_sec) {
+	    clos_ts = ts;
+	    last_sec = ts.tv_sec;
+	    rzkeychange_submit_counts();
+	    open_ts = ts;
+    }
 }
