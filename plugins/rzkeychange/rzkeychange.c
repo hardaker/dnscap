@@ -103,7 +103,7 @@ rzkeychange_usage()
 	"\t-z <zone>    Report counters to DNS zone <zone> (required)\n"
 	"\t-s <server>  Data is from server <server> (required)\n"
 	"\t-n <node>    Data is from site/node <node> (required)\n"
-	"\t-l           Report as if not-live (times pulled from the pcap file)\n"
+	"\t-l <seconds> Report as if not-live, with delta times pulled from data not wall secs\n"
 	"\t-r           Don't report anything via DNS queries\n"
     );
 }
