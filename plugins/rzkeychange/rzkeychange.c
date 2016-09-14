@@ -119,7 +119,7 @@ rzkeychange_usage()
 	"\t-a <addr>	Send DNS queries to this addr\n"
 	"\t-p <port>    Send DNS queries to this port\n"
 	"\t-t           Use TCP for DNS queries\n"
-	"\t-l           Report as if not-live (times pulled from the pcap file)\n"
+	"\t-l <seconds> Report as if not-live, with delta times pulled from data not wall secs\n"
 	"\t-r           Don't report anything via DNS queries\n"
     );
 }
