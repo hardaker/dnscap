@@ -209,10 +209,9 @@ rzkeychange_stop()
 {
 }
 
-int
-rzkeychange_open(my_bpftimeval ts)
+void
+reset_counts(void)
 {
-    open_ts = clos_ts.tv_sec ? clos_ts : ts;
 #if COUNT_SOURCES
     if (counts.sources.tbl)
 	hash_destroy(counts.sources.tbl);
@@ -221,6 +220,13 @@ rzkeychange_open(my_bpftimeval ts)
 #if COUNT_SOURCES
     counts.sources.tbl = hash_create(65536, (hashfunc *) iaddr_hash, (hashkeycmp *) iaddr_cmp, 0);
 #endif
+}
+
+int
+rzkeychange_open(my_bpftimeval ts)
+{
+    open_ts = clos_ts.tv_sec ? clos_ts : ts;
+    reset_counts();
     return 0;
 }
 
@@ -351,5 +357,6 @@ done:
 	    last_sec = ts.tv_sec;
 	    rzkeychange_submit_counts();
 	    open_ts = ts;
+	    reset_counts();
     }
 }
