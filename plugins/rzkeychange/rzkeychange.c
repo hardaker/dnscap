@@ -37,6 +37,7 @@ static const char *report_node = 0;
 static unsigned short resolver_port = 0;
 static unsigned int resolver_use_tcp = 0;
 static unsigned notLive = 0;
+static unsigned staticFileRotateTime = 0;
 static char noReporting = 0;
 static ldns_resolver *res;
 static time_t  last_sec = 0;
@@ -154,8 +155,8 @@ rzkeychange_getopt(int *argc, char **argv[])
 	    resolver_use_tcp = 1;
 	    break;
 	case 'l':
-	    notLive = strtoul(optarg, NULL, 0);
-	    if (notLive <= 0) {
+	    staticFileRotateTime = strtoul(optarg, NULL, 0);
+	    if (staticFileRotateTime <= 0) {
 		    fprintf(stderr, "-l requires an integer value of seconds\n");
 		    exit(1);
 	    }
@@ -414,7 +415,7 @@ rzkeychange_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsig
 done:
     ldns_pkt_free(pkt);
 
-    if (notLive && last_sec + notLive < ts.tv_sec) {
+    if (staticFileRotateTime && last_sec + staticFileRotateTime < ts.tv_sec) {
 	    clos_ts = ts;
 	    last_sec = ts.tv_sec;
 	    rzkeychange_submit_counts();
