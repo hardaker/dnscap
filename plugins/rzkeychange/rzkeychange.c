@@ -29,6 +29,9 @@
 #endif
 
 static plugin_callbacks *callbacks = 0;
+void rzkeychange_submit_counts(void);
+
+static logerr_t *logerr;
 static my_bpftimeval open_ts = {0,0};
 static my_bpftimeval clos_ts = {0,0};
 static const char *report_zone = 0;
@@ -38,7 +41,9 @@ static unsigned short resolver_port = 0;
 static unsigned int resolver_use_tcp = 0;
 static unsigned notLive = 0;
 static unsigned staticFileRotateTime = 0;
+static unsigned notLive = 0;
 static char noReporting = 0;
+static char verbose = 0;
 static ldns_resolver *res;
 static time_t  last_sec = 0;
 
@@ -122,6 +127,7 @@ rzkeychange_usage()
 	"\t-t           Use TCP for DNS queries\n"
 	"\t-l <seconds> Report as if not-live, with delta times pulled from data not wall secs\n"
 	"\t-r           Don't report anything via DNS queries\n"
+	"\t-v           Report queries to stderr too\n"
     );
 }
 
@@ -155,8 +161,8 @@ rzkeychange_getopt(int *argc, char **argv[])
 	    resolver_use_tcp = 1;
 	    break;
 	case 'l':
-	    staticFileRotateTime = strtoul(optarg, NULL, 0);
-	    if (staticFileRotateTime <= 0) {
+	    notLive = strtoul(optarg, NULL, 0);
+	    if (notLive <= 0) {
 		    fprintf(stderr, "-l requires an integer value of seconds\n");
 		    exit(1);
 	    }
@@ -282,6 +288,7 @@ int
 rzkeychange_open(my_bpftimeval ts)
 {
     open_ts = clos_ts.tv_sec ? clos_ts : ts;
+    last_sec = open_ts.tv_sec;
     reset_counts();
     return 0;
 }
@@ -305,9 +312,10 @@ rzkeychange_submit_counts(void)
 	report_server,
 	report_zone);
 
-    if (noReporting) {
+    if (noReporting || verbose) {
 	    fprintf(stderr, "%s\n", qname);
-    } else {
+    }
+    if (! noReporting) {
 	    dns_query(qname, LDNS_RR_TYPE_TXT);
     }
     /* normally we would free any return packet, but this process is about to exit */
@@ -341,7 +349,9 @@ rzkeychange_close(my_bpftimeval ts)
     }
     /* grandchild (2nd gen) continues */
     clos_ts = ts;
+//    fprintf(stderr, "closing\n");
     rzkeychange_submit_counts();
+//    fprintf(stderr, "closed\n");
     exit(0);
 }
 
@@ -415,7 +425,7 @@ rzkeychange_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsig
 done:
     ldns_pkt_free(pkt);
 
-    if (staticFileRotateTime && last_sec + staticFileRotateTime < ts.tv_sec) {
+    if (notLive && last_sec + notLive <= ts.tv_sec) {
 	    clos_ts = ts;
 	    last_sec = ts.tv_sec;
 	    rzkeychange_submit_counts();
