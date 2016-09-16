@@ -39,7 +39,6 @@ static const char *report_server = 0;
 static const char *report_node = 0;
 static unsigned short resolver_port = 0;
 static unsigned int resolver_use_tcp = 0;
-static unsigned notLive = 0;
 static unsigned staticFileRotateTime = 0;
 static unsigned notLive = 0;
 static char noReporting = 0;
