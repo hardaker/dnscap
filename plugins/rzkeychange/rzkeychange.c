@@ -136,7 +136,7 @@ rzkeychange_getopt(int *argc, char **argv[])
     int c;
     unsigned long ul;
     char *p;
-    while ((c = getopt(*argc, *argv, "a:n:p:s:tz:rl:")) != EOF) {
+    while ((c = getopt(*argc, *argv, "a:n:p:s:tz:rl:v")) != EOF) {
 	switch (c) {
 	case 'n':
 	    report_node = strdup(optarg);
