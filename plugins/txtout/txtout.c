@@ -18,6 +18,12 @@ static FILE *out = 0;
 
 output_t txtout_output;
 
+/*
+ * Creates an output file of text in a single line format:
+ *
+ * 1474844581.852948 127.0.0.1 65067 192.228.79.201 53 17 4073 0 0 |CD| IN A jiolemqmoadv.Home
+ */
+
 void
 txtout_usage()
 {

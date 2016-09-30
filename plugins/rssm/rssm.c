@@ -27,6 +27,46 @@
 
 #include "hashtbl.h"
 
+/*
+ * Creates a set of stastics based on DNS data:
+ *
+ * -w output:
+ *   first-packet-time 1474844581
+ *   last-packet-time 1474844584
+ *   dns-udp-queries-received-ipv4 84620
+ *   dns-udp-queries-received-ipv6 0
+ *   dns-tcp-queries-received-ipv4 0
+ *   dns-tcp-queries-received-ipv6 0
+ *   dns-udp-responses-sent-ipv4 0
+ *   dns-udp-responses-sent-ipv6 0
+ *   dns-tcp-responses-sent-ipv4 0
+ *   dns-tcp-responses-sent-ipv6 0
+ *   dns-udp-query-size 16-31 21696
+ *   dns-udp-query-size 32-47 46966
+ *   dns-udp-query-size 48-63 13321
+ *   dns-udp-query-size 64-79 1506
+ *   dns-udp-query-size 80-95 727
+ *   dns-udp-query-size 96-111 308
+ *   dns-udp-query-size 112-127 36
+ *   dns-udp-query-size 128-143 5
+ *   dns-udp-query-size 144-159 10
+ *   dns-udp-query-size 160-175 1
+ *   dns-udp-query-size 208-223 2
+ *   dns-udp-query-size 224-239 5
+ *   dns-udp-query-size 240-255 10
+ *   dns-udp-query-size 256-271 8
+ *   dns-udp-query-size 512-527 19
+ *   num-sources 13102
+ *
+ * -s ouput:
+ *   127.0.0.1 122
+ *   10.0.0.1 44
+ *   192.168.1.1 20
+ *   ...
+ *
+ * Note: useful to pass to sort -n -k 2
+ */
+
 static logerr_t *logerr;
 static my_bpftimeval open_ts;
 static my_bpftimeval clos_ts;
