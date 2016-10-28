@@ -30,6 +30,8 @@
 /*
  * Creates a set of stastics based on DNS data:
  *
+ * (suggest using -T and -6 to get more numbers for v6 and tcp)
+ *
  * -w output:
  *   first-packet-time 1474844581
  *   last-packet-time 1474844584
