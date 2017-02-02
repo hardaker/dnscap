@@ -275,10 +275,10 @@ hash_find_or_add(iaddr ia, my_hashtbl * t)
 #endif
 
 void
-rzkeychange_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int isfrag,
+rzkeychange_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsigned flags,
     unsigned sport, unsigned dport, my_bpftimeval ts,
-    const u_char * pkt_copy, unsigned olen,
-    const u_char * dnspkt, unsigned dnslen)
+    const u_char * pkt_copy, const unsigned olen,
+    const u_char * dnspkt, const unsigned dnslen)
 {
     ldns_pkt *pkt = 0;
     ldns_rr_list *question_rr_list = 0;
