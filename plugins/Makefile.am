@@ -1,5 +1,5 @@
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
-SUBDIRS = pcapdump rssm txtout
+SUBDIRS = pcapdump regexcount rssm txtout rzkeychange 
 
 EXTRA_DIST = template

@@ -142,7 +142,9 @@ AC_CONFIG_FILES([
 	src/test/Makefile
     plugins/Makefile
     plugins/pcapdump/Makefile
+    plugins/regexcount/Makefile
     plugins/rssm/Makefile
     plugins/txtout/Makefile
+    plugins/rzkeychange/Makefile
 ])
 AC_OUTPUT
