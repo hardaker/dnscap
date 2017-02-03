@@ -141,6 +141,7 @@ AC_CONFIG_FILES([
     src/Makefile
     plugins/Makefile
     plugins/pcapdump/Makefile
+    plugins/regexcount/Makefile
     plugins/rssm/Makefile
     plugins/txtout/Makefile
     plugins/rzkeychange/Makefile
