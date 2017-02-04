@@ -61,7 +61,7 @@ typedef struct regex_list_item_s {
    char *name;
 } regex_list_item;
 
-regex_list_item **regex_list;
+regex_list_item *regex_list;
 size_t          regex_list_len = 0;
 unsigned        regex_list_count = 0;
 
@@ -102,6 +102,7 @@ regexcount_getopt(int *argc, char **argv[])
 			newitem->regex = strdup(equal + 1);
 			newitem->name = strndup(optarg, equal - optarg);
 			fprintf(stderr, "here: %s + %s\n", newitem->regex, newitem->name);
+			
 		}
 		        break;
 		case 's':
@@ -133,6 +134,14 @@ regexcount_start(logerr_t *a_logerr)
 	} else {
 		out = stdout;
 	}
+
+	fprintf(out,"#");
+	for(int i = 0; i < regex_list_count; i++) {
+		fprintf(out, "%s%s", regex_list[i].name, seperator);
+	}
+	fprintf(out,"\n");
+	printf("-------------xyz--------\n");
+
 	return 0;
 }
 
@@ -171,14 +180,6 @@ regexcount_close(my_bpftimeval ts)
 	return 0;
 }
 
-static const char *
-ia_str(iaddr ia) {
-        static char ret[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
-
-        (void) inet_ntop(ia.af, &ia.u, ret, sizeof ret);
-        return (ret);
-}
-
 void
 regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsigned flags,
     unsigned sport, unsigned dport, my_bpftimeval ts,
@@ -188,10 +189,6 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 	/*
 	 * IP Stuff
 	 */
-	fprintf(out, "%10ld.%06ld", ts.tv_sec, (long)ts.tv_usec);
-	fprintf(out, " %s %u", ia_str(from), sport);
-	fprintf(out, " %s %u", ia_str(to), dport);
-	fprintf(out, " %hhu", proto);
 
 	if (flags & DNSCAP_OUTPUT_ISDNS) {
 		ns_msg msg;
