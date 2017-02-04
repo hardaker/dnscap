@@ -58,6 +58,7 @@ static FILE *out = 0;
 static char *seperator = 0;
 static int last_tv = 0;
 static int pktcount = 0;
+static int debug = 0;
 
 output_t regexcount_output;
 
@@ -80,6 +81,7 @@ regexcount_usage()
 	        "\t-o <arg>        output file name\n"
 	        "\t-r name=regex   count 'regexp' patterns and put them in the ouptut stream under 'name'\n"
 	        "\t-s <sep>        Use <sep> as the record separator instead of tab\n"
+	        "\t-d              debug -- print out matches in comments\n"
 		);
 }
 
@@ -95,13 +97,14 @@ regexcount_getopt(int *argc, char **argv[])
 	regex_list = calloc(regex_list_len, sizeof(regex_list_item));
 
 	int c;
-	while ((c = getopt(*argc, *argv, "o:r:s:")) != EOF) {
+	while ((c = getopt(*argc, *argv, "o:r:s:d")) != EOF) {
 		switch(c) {
 		case 'o':
 			if (outfile)
 				free(outfile);
 			outfile = strdup(optarg);
 			break;
+
 		case 'r':
 		{
 			regex_list_item *newitem = &regex_list[regex_list_count];
@@ -123,10 +126,16 @@ regexcount_getopt(int *argc, char **argv[])
 			regex_list_count++;
 		}
 		        break;
+
 		case 's':
 			free(seperator);
 			seperator = strdup(optarg);
 			break;
+
+		case 'd':
+			debug = 1;
+			break;
+			
 		default:
 			regexcount_usage();
 			exit(1);
@@ -257,6 +266,11 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 				if (regexec(&regex_list[i].reg, rrname,
 				            0, NULL, 0) == 0) {
 					regex_list[i].count++;
+					if(debug) {
+						fprintf(out, "# %s: %s\n",
+						        regex_list[i].name,
+						        rrname);
+					}
 				}
 #endif /* ! SIMPLE_STRINGS */
 			}
