@@ -45,6 +45,9 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <stdlib.h>
+#include <regex.h>
+
+#define REGEX_CFLAGS	(REG_EXTENDED|REG_ICASE|REG_NOSUB|REG_NEWLINE)
 
 #include "dnscap_common.h"
 
@@ -59,9 +62,10 @@ static int pktcount = 0;
 output_t regexcount_output;
 
 typedef struct regex_list_item_s {
-   char *regex;
-   char *name;
-   int count;
+   char *    regex;
+   regex_t   reg;
+   char     *name;
+   int       count;
 } regex_list_item;
 
 regex_list_item *regex_list;
@@ -103,8 +107,18 @@ regexcount_getopt(int *argc, char **argv[])
 			regex_list_item *newitem = &regex_list[regex_list_count];
 
 			char *equal = strchr(optarg, '=');
+			int rc;
+			
 			newitem->regex = strdup(equal + 1);
 			newitem->name = strndup(optarg, equal - optarg);
+
+			rc = regcomp(&newitem->reg, newitem->regex, REGEX_CFLAGS);
+			if (rc) {
+				char buf[4096];
+				regerror(rc, &newitem->reg, buf, sizeof(buf));
+				fprintf(stderr, "error: %s\n", buf);
+				exit(1);
+			}
 
 			regex_list_count++;
 		}
@@ -234,10 +248,17 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 			// count matches
 			// fprintf(out, "# searching: %s\n", rrname);
 			for(int i = 0; i < regex_list_count; i++) {
+#ifdef SIMPLE_STRINGS
 				if (strstr(rrname, regex_list[i].regex)) {
 					regex_list[i].count++;
 					// fprintf(out, "# found one: %s\n", rrname);
 				}
+#else /* ! SIMPLE_STRINGS */
+				if (regexec(&regex_list[i].reg, rrname,
+				            0, NULL, 0) == 0) {
+					regex_list[i].count++;
+				}
+#endif /* ! SIMPLE_STRINGS */
 			}
 		}
 	}
