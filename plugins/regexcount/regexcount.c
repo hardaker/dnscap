@@ -53,12 +53,15 @@ static int opt_f = 0;
 static char *outfile = 0;
 static FILE *out = 0;
 static char *seperator = 0;
+static int last_tv = 0;
+static int pktcount = 0;
 
 output_t regexcount_output;
 
 typedef struct regex_list_item_s {
    char *regex;
    char *name;
+   int count;
 } regex_list_item;
 
 regex_list_item *regex_list;
@@ -97,12 +100,13 @@ regexcount_getopt(int *argc, char **argv[])
 			break;
 		case 'r':
 		{
-			regex_list_item *newitem = calloc(1, sizeof(regex_list_item));
+			regex_list_item *newitem = &regex_list[regex_list_count];
+
 			char *equal = strchr(optarg, '=');
 			newitem->regex = strdup(equal + 1);
 			newitem->name = strndup(optarg, equal - optarg);
-			fprintf(stderr, "here: %s + %s\n", newitem->regex, newitem->name);
-			
+
+			regex_list_count++;
 		}
 		        break;
 		case 's':
@@ -135,9 +139,9 @@ regexcount_start(logerr_t *a_logerr)
 		out = stdout;
 	}
 
-	fprintf(out,"#");
+	fprintf(out,"#\t\t");
 	for(int i = 0; i < regex_list_count; i++) {
-		fprintf(out, "%s%s", regex_list[i].name, seperator);
+		fprintf(out, "%s%s", regex_list[i].name, (i == regex_list_count-1) ? "" : seperator);
 	}
 	fprintf(out,"\n");
 	printf("-------------xyz--------\n");
@@ -198,28 +202,46 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 		/*
 		 * DNS Header
 		 */
-		fprintf(out, " %u", ns_msg_id(msg));
-		fprintf(out, " %u", ns_msg_getflag(msg, ns_f_opcode));
-		fprintf(out, " %u", ns_msg_getflag(msg, ns_f_rcode));
-		fprintf(out, " |");
-		if (ns_msg_getflag(msg, ns_f_qr)) fprintf(out, "QR|");
-		if (ns_msg_getflag(msg, ns_f_aa)) fprintf(out, "AA|");
-		if (ns_msg_getflag(msg, ns_f_tc)) fprintf(out, "TC|");
-		if (ns_msg_getflag(msg, ns_f_rd)) fprintf(out, "RD|");
-		if (ns_msg_getflag(msg, ns_f_ra)) fprintf(out, "RA|");
-		if (ns_msg_getflag(msg, ns_f_ad)) fprintf(out, "AD|");
-		if (ns_msg_getflag(msg, ns_f_cd)) fprintf(out, "CD|");
 
 		qdcount = ns_msg_count(msg, ns_s_qd);
 		if (qdcount > 0 && 0 == ns_parserr(&msg, ns_s_qd, 0, &rr)) {
-			fprintf (out, " %s %s %s",
-				p_class(ns_rr_class(rr)),
-				p_type(ns_rr_type(rr)),
-				ns_rr_name(rr));
+			char *rrname = ns_rr_name(rr);
+			//fprintf(out, "%s", rrname);
+
+			if (last_tv != ts.tv_sec) {
+				if (last_tv > 0) {
+					for(int t=last_tv+1; t < ts.tv_sec; t++) {
+						fprintf(out, "%d%s", t, seperator);
+						for(int i = 0; i < regex_list_count; i++) {
+							fprintf(out, "%d%s", 0, (i == regex_list_count-1) ? "" : seperator);
+						}
+						fprintf(out,"\n");
+					}
+				}
+
+				/* print records for the last second */
+				fprintf(out, "%d%s", ts.tv_sec, seperator);
+				for(int i = 0; i < regex_list_count; i++) {
+					fprintf(out, "%d%s", regex_list[i].count, (i == regex_list_count-1) ? "" : seperator);
+					regex_list[i].count = 0;
+				}
+				fprintf(out,"\n");
+
+				pktcount = 0;
+				last_tv = ts.tv_sec;
+			}
+
+			// count matches
+			// fprintf(out, "# searching: %s\n", rrname);
+			for(int i = 0; i < regex_list_count; i++) {
+				if (strstr(rrname, regex_list[i].regex)) {
+					regex_list[i].count++;
+					// fprintf(out, "# found one: %s\n", rrname);
+				}
+			}
 		}
 	}
 	/*
 	 * Done
 	 */
-	fprintf(out, "\n");
 }
