@@ -57,7 +57,6 @@ static char *outfile = 0;
 static FILE *out = 0;
 static char *seperator = 0;
 static int last_tv = 0;
-static int pktcount = 0;
 static int debug = 0;
 
 output_t regexcount_output;
@@ -232,6 +231,11 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 
 			if (last_tv != ts.tv_sec) {
 				if (last_tv > 0) {
+					/* for completeness of data,
+					   print zeros and every
+					   second we collected nothing
+					   between the last print and
+					   this one */
 					for(int t=last_tv+1; t < ts.tv_sec; t++) {
 						fprintf(out, "%d%s", t, seperator);
 						for(int i = 0; i < regex_list_count; i++) {
@@ -249,7 +253,6 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 				}
 				fprintf(out,"\n");
 
-				pktcount = 0;
 				last_tv = ts.tv_sec;
 			}
 
