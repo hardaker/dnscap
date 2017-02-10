@@ -1200,7 +1200,7 @@ parse_args(int argc, char *argv[]) {
 	assert(msg_wanted != 0U);
 	assert(err_wanted != 0U);
 	if (dump_type == nowhere && !preso && EMPTY(plugins))
-		usage("without -w or -g, there would be no output");
+		usage("without -w, -g or -P, there would be no output");
 	if (end_hide != 0U && wantfrags)
 		usage("the -h and -f options are incompatible");
 	if (!EMPTY(vlans_incl) && !EMPTY(vlans_excl))
