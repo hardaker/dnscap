@@ -142,6 +142,33 @@ regexcount_getopt(int *argc, char **argv[])
 	}
 }
 
+void
+print_counts(my_bpftimeval ts) {
+	if (last_tv > 0) {
+		/* for completeness of data,
+		   print zeros and every
+		   second we collected nothing
+		   between the last print and
+		   this one */
+		for(int t=last_tv+1; t < ts.tv_sec; t++) {
+			fprintf(out, "%d%s", t, seperator);
+			for(int i = 0; i < regex_list_count; i++) {
+				fprintf(out, "%d%s", 0, (i == regex_list_count-1) ? "" : seperator);
+			}
+			fprintf(out,"\n");
+		}
+	}
+
+	/* print records for the last second */
+	fprintf(out, "%d%s", ts.tv_sec-1, seperator);
+	for(int i = 0; i < regex_list_count; i++) {
+		fprintf(out, "%d%s", regex_list[i].count, (i == regex_list_count-1) ? "" : seperator);
+		regex_list[i].count = 0;
+	}
+	fprintf(out,"\n");
+	last_tv = ts.tv_sec;
+}	
+
 int
 regexcount_start(logerr_t *a_logerr)
 {
@@ -190,6 +217,7 @@ regexcount_open(my_bpftimeval ts)
 	 * of time or a number of packets.  In the original code,
 	 * this is where we opened an output pcap file.
 	 */
+	last_tv = ts.tv_sec;
 	return 0;
 }
 
@@ -202,6 +230,7 @@ regexcount_close(my_bpftimeval ts)
 	 * of time or on a number of packets.  In the original code
 	 * this is where we closed an output pcap file.
 	 */
+	print_counts(ts);
 	return 0;
 }
 
@@ -230,30 +259,7 @@ regexcount_output(const char *descr, iaddr from, iaddr to, uint8_t proto, unsign
 			//fprintf(out, "%s", rrname);
 
 			if (last_tv != ts.tv_sec) {
-				if (last_tv > 0) {
-					/* for completeness of data,
-					   print zeros and every
-					   second we collected nothing
-					   between the last print and
-					   this one */
-					for(int t=last_tv+1; t < ts.tv_sec; t++) {
-						fprintf(out, "%d%s", t, seperator);
-						for(int i = 0; i < regex_list_count; i++) {
-							fprintf(out, "%d%s", 0, (i == regex_list_count-1) ? "" : seperator);
-						}
-						fprintf(out,"\n");
-					}
-				}
-
-				/* print records for the last second */
-				fprintf(out, "%d%s", ts.tv_sec, seperator);
-				for(int i = 0; i < regex_list_count; i++) {
-					fprintf(out, "%d%s", regex_list[i].count, (i == regex_list_count-1) ? "" : seperator);
-					regex_list[i].count = 0;
-				}
-				fprintf(out,"\n");
-
-				last_tv = ts.tv_sec;
+				print_counts(ts);
 			}
 
 			// count matches
