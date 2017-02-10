@@ -58,6 +58,7 @@ static FILE *out = 0;
 static char *seperator = 0;
 static int last_tv = 0;
 static int debug = 0;
+static int noheader = 0;
 
 output_t regexcount_output;
 
@@ -81,6 +82,7 @@ regexcount_usage()
 	        "\t-r name=regex   count 'regexp' patterns and put them in the ouptut stream under 'name'\n"
 	        "\t-s <sep>        Use <sep> as the record separator instead of tab\n"
 	        "\t-d              debug -- print out matches in comments\n"
+	        "\t-H              don't print the leading # header\n"
 		);
 }
 
@@ -96,7 +98,7 @@ regexcount_getopt(int *argc, char **argv[])
 	regex_list = calloc(regex_list_len, sizeof(regex_list_item));
 
 	int c;
-	while ((c = getopt(*argc, *argv, "o:r:s:d")) != EOF) {
+	while ((c = getopt(*argc, *argv, "o:r:s:dH")) != EOF) {
 		switch(c) {
 		case 'o':
 			if (outfile)
@@ -135,6 +137,10 @@ regexcount_getopt(int *argc, char **argv[])
 			debug = 1;
 			break;
 			
+		case 'H':
+			noheader = 1;
+			break;
+
 		default:
 			regexcount_usage();
 			exit(1);
@@ -188,12 +194,13 @@ regexcount_start(logerr_t *a_logerr)
 		out = stdout;
 	}
 
-	fprintf(out,"#\t\t");
-	for(int i = 0; i < regex_list_count; i++) {
-		fprintf(out, "%s%s", regex_list[i].name, (i == regex_list_count-1) ? "" : seperator);
+	if (! noheader) {
+		fprintf(out,"#\t\t");
+		for(int i = 0; i < regex_list_count; i++) {
+			fprintf(out, "%s%s", regex_list[i].name, (i == regex_list_count-1) ? "" : seperator);
+		}
+		fprintf(out,"\n");
 	}
-	fprintf(out,"\n");
-
 	return 0;
 }
 
