@@ -167,7 +167,6 @@ regexcount_start(logerr_t *a_logerr)
 		fprintf(out, "%s%s", regex_list[i].name, (i == regex_list_count-1) ? "" : seperator);
 	}
 	fprintf(out,"\n");
-	printf("-------------xyz--------\n");
 
 	return 0;
 }
